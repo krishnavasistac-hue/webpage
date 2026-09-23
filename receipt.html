@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Receipt</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', monospace;
+    max-width: 380px;
+    margin: 20px auto;
+    padding: 20px;
+    color: #111;
+    background: #fff;
+  }
+  .center { text-align: center; }
+  .brand { font-size: 22px; font-weight: bold; letter-spacing: 2px; }
+  .muted { color: #666; font-size: 12px; }
+  .divider { border-top: 1px dashed #999; margin: 12px 0; }
+  .row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .total { font-weight: bold; font-size: 16px; border-top: 2px solid #111; padding-top: 8px; margin-top: 8px; }
+  .qr { margin: 12px auto; width: 130px; height: 130px; }
+  .footer { margin-top: 20px; font-size: 11px; text-align: center; color: #666; }
+  @media print {
+    body { margin: 0; }
+    .no-print { display: none; }
+  }
+  .no-print {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .no-print button {
+    padding: 10px 24px;
+    border-radius: 40px;
+    border: none;
+    background: #4f46e5;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 0 4px;
+  }
+  .no-print button.alt { background: #e2e8f0; color: #334155; }
+</style>
+</head>
+<body>
+  <div class="center">
+    <div class="brand">🍽️ COLLEGE CANTEEN</div>
+    <div class="muted">Pre-Order System</div>
+    <div class="muted">canteen@upi · +91 00000 00000</div>
+  </div>
+  <div class="divider"></div>
+  <div id="receiptBody"></div>
+  <div class="footer">
+    Thank you for ordering!<br>
+    Please collect at your pickup time.<br>
+    Keep this receipt until collected.
+  </div>
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Print</button>
+    <button class="alt" onclick="window.close()">Close</button>
+  </div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const orderId = parseInt(params.get('id'));
+  const data = JSON.parse(localStorage.getItem('canteenData'));
+  const order = data.orders.find(o => o.id === orderId);
+  const user = order ? data.users.find(u => u.id === order.userId) : null;
+  const body = document.getElementById('receiptBody');
+
+  if(!order){
+    body.innerHTML = '<p class="center">Order not found.</p>';
+  } else {
+    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(order.qrToken) + '&margin=0';
+    body.innerHTML = `
+      <div class="row"><span>Order #</span><span><b>${order.id}</b></span></div>
+      <div class="row"><span>Date</span><span>${new Date(order.createdAt).toLocaleString()}</span></div>
+      <div class="row"><span>Student</span><span>${user ? user.name : 'Unknown'}</span></div>
+      <div class="row"><span>Pickup</span><span>${order.pickupTime}</span></div>
+      <div class="divider"></div>
+      ${order.items.map(i => `
+        <div class="row"><span>${i.name} × ${i.quantity}</span><span>₹${(i.price * i.quantity).toFixed(2)}</span></div>
+      `).join('')}
+      <div class="divider"></div>
+      <div class="row total"><span>TOTAL</span><span>₹${order.totalAmount.toFixed(2)}</span></div>
+      <div class="center">
+        <img class="qr" src="${qrUrl}" alt="QR">
+        <div class="muted">Scan to verify</div>
+        <div class="muted" style="margin-top:4px;word-break:break-all;font-size:10px;">${order.qrToken}</div>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>

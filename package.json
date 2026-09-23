@@ -1,0 +1,14 @@
+{
+  "name": "canteen-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "razorpay": "^2.9.4",
+    "dotenv": "^16.4.5"
+  }
+}
